@@ -1,0 +1,30 @@
+sudo: false
+
+language: elm
+elm:
+  - elm0.19.0
+
+git:
+  depth: false
+
+branches:
+  only:
+  - master
+
+jobs:
+  include:
+    - stage: Build 🔨
+      script:
+      - FORMAT=$(elm-format --validate src/)
+      - test "$FORMAT" = "[]" || (echo $FORMAT && exit 1)
+
+    - stage: Build 🔨
+      script:
+      - elm make src/Main.elm --optimize
+
+    - stage: Deploy 🚀
+      script:
+      - elm make src/Main.elm --optimize --output=app.js
+      - git add app.js index.html && git commit -m $TRAVIS_COMMIT
+      - git checkout gh-pages && git cherry-pick -X theirs -n - && git commit --allow-empty --no-edit
+      - git push -f -q https://KtorZ:$GITHUB_ACCESS_TOKEN@github.com/KtorZ/elm-toulouse-2 gh-pages &>/dev/null
