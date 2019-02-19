@@ -159,6 +159,14 @@ nextQuestion seed =
                     , wrongAnswers = List.map .mass wrongs
                     }
 
+        CPeople Gender ->
+            fetchPeople newSeed <|
+                \( right, wrongs ) ->
+                    { question = "What is the gender of " ++ right.name ++ " ?"
+                    , goodAnswer = right.gender
+                    , wrongAnswers = List.map .gender wrongs
+                    }
+
 
 
 {-
@@ -231,12 +239,14 @@ type Category
 type PeopleField
     = Height
     | Mass
+    | Gender
 
 
 arbitraryCategory : Generator Category
 arbitraryCategory =
     Random.uniform (CPeople Height)
         [ CPeople Mass
+        , CPeople Gender
         ]
 
 
@@ -244,15 +254,17 @@ type alias People =
     { name : String
     , mass : String
     , height : String
+    , gender : String
     }
 
 
 peopleDecoder : Decoder People
 peopleDecoder =
-    Decode.map3 People
+    Decode.map4 People
         (Decode.field "name" Decode.string)
         (Decode.field "mass" Decode.string)
         (Decode.field "height" Decode.string)
+        (Decode.field "gender" Decode.string)
 
 
 
