@@ -7,6 +7,7 @@ import Html.Events exposing (..)
 import Http as Http exposing (expectJson)
 import Json.Decode as Decode exposing (Decoder)
 import Random as Random exposing (Generator, Seed)
+import Set exposing (Set)
 
 
 main : Program () Model Msg
@@ -46,7 +47,7 @@ type Questionnaire
 type alias Question =
     { question : String
     , goodAnswer : String
-    , wrongAnswers : List String
+    , wrongAnswers : Set String
     }
 
 
@@ -156,7 +157,10 @@ nextQuestion seed =
                 \( right, wrongs ) ->
                     { question = "How tall is " ++ right.name ++ "?"
                     , goodAnswer = right.height
-                    , wrongAnswers = List.map .height wrongs
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .height
+                            |> Set.fromList
                     }
 
         CPeople Mass ->
@@ -164,7 +168,10 @@ nextQuestion seed =
                 \( right, wrongs ) ->
                     { question = "How much does " ++ right.name ++ " weight?"
                     , goodAnswer = right.mass
-                    , wrongAnswers = List.map .mass wrongs
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .mass
+                            |> Set.fromList
                     }
 
         CPeople Gender ->
@@ -172,7 +179,10 @@ nextQuestion seed =
                 \( right, wrongs ) ->
                     { question = "What is the gender of " ++ right.name ++ " ?"
                     , goodAnswer = right.gender
-                    , wrongAnswers = List.map .gender wrongs
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .gender
+                            |> Set.fromList
                     }
 
         CSpecies AverageHeight ->
@@ -180,7 +190,10 @@ nextQuestion seed =
                 \( right, wrongs ) ->
                     { question = "What is the aveage height of " ++ right.name ++ " ?"
                     , goodAnswer = right.averageHeight
-                    , wrongAnswers = List.map .averageHeight wrongs
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .averageHeight
+                            |> Set.fromList
                     }
 
         CSpecies AverageLifespan ->
@@ -188,7 +201,10 @@ nextQuestion seed =
                 \( right, wrongs ) ->
                     { question = "What is the aveage lifespan of " ++ right.name ++ " ?"
                     , goodAnswer = right.averageLifespan
-                    , wrongAnswers = List.map .averageLifespan wrongs
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .averageLifespan
+                            |> Set.fromList
                     }
 
         CSpecies Classification ->
@@ -196,7 +212,10 @@ nextQuestion seed =
                 \( right, wrongs ) ->
                     { question = "What is the classification of " ++ right.name ++ " ?"
                     , goodAnswer = right.classification
-                    , wrongAnswers = List.map .classification wrongs
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .classification
+                            |> Set.fromList
                     }
 
 
@@ -352,7 +371,9 @@ viewQuestionnaire questionnaire =
             div
                 [ class "container" ]
                 [ p [] [ text question ]
-                , div [ class "answers" ] <| List.map viewAnswer (goodAnswer :: wrongAnswers)
+                , div [ class "answers" ] <|
+                    List.map viewAnswer <|
+                        Set.toList (Set.insert goodAnswer wrongAnswers)
                 ]
 
         Errored ->
