@@ -398,7 +398,7 @@ viewQuestionnaire questionnaire =
         AskingQuestion { question, goodAnswer, wrongAnswers, secondsLeft } ->
             div
                 [ class "container" ]
-                [ p [] [ text "Time left : ", viewTimer secondsLeft ]
+                [ p [] [ viewTimer secondsLeft ]
                 , p [] [ text question ]
                 , div [ class "answers" ] <|
                     List.map viewAnswer <|
