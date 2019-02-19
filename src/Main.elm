@@ -8,6 +8,7 @@ import Http as Http exposing (expectJson)
 import Json.Decode as Decode exposing (Decoder)
 import Random as Random exposing (Generator, Seed)
 import Set exposing (Set)
+import Time exposing (Posix)
 
 
 main : Program () Model Msg
@@ -16,7 +17,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = \_ -> Time.every 1000 GotTime
         }
 
 
@@ -48,6 +49,7 @@ type alias Question =
     { question : String
     , goodAnswer : String
     , wrongAnswers : Set String
+    , secondsLeft : Int
     }
 
 
@@ -57,6 +59,7 @@ type Msg
     | GotAnswer String
     | DismissNotification
     | Retry
+    | GotTime Posix
 
 
 
@@ -106,6 +109,25 @@ update msg model =
                     Just <| Error <| "Ho crap! We got an error when reaching out the server: " ++ httpErrorToString err
             in
             ( { model | questionnaire = Errored, notification = notification }, Cmd.none )
+
+        ( GotTime _, AskingQuestion question ) ->
+            case question.secondsLeft - 1 of
+                0 ->
+                    let
+                        notification =
+                            Just <| Error <| "Too late! (✖╭╮✖)"
+                    in
+                    ( { model | questionnaire = PreparingQuestion, notification = notification }, nextQuestion model.seed )
+
+                secondsLeft ->
+                    let
+                        newQuestion =
+                            { question | secondsLeft = secondsLeft }
+                    in
+                    ( { model | questionnaire = AskingQuestion newQuestion }, Cmd.none )
+
+        ( GotTime _, _ ) ->
+            ( model, Cmd.none )
 
         ( _, _ ) ->
             let
@@ -161,6 +183,7 @@ nextQuestion seed =
                         wrongs
                             |> List.map .height
                             |> Set.fromList
+                    , secondsLeft = 10
                     }
 
         CPeople Mass ->
@@ -172,6 +195,7 @@ nextQuestion seed =
                         wrongs
                             |> List.map .mass
                             |> Set.fromList
+                    , secondsLeft = 10
                     }
 
         CPeople Gender ->
@@ -183,6 +207,7 @@ nextQuestion seed =
                         wrongs
                             |> List.map .gender
                             |> Set.fromList
+                    , secondsLeft = 10
                     }
 
         CSpecies AverageHeight ->
@@ -194,6 +219,7 @@ nextQuestion seed =
                         wrongs
                             |> List.map .averageHeight
                             |> Set.fromList
+                    , secondsLeft = 10
                     }
 
         CSpecies AverageLifespan ->
@@ -205,6 +231,7 @@ nextQuestion seed =
                         wrongs
                             |> List.map .averageLifespan
                             |> Set.fromList
+                    , secondsLeft = 10
                     }
 
         CSpecies Classification ->
@@ -216,6 +243,7 @@ nextQuestion seed =
                         wrongs
                             |> List.map .classification
                             |> Set.fromList
+                    , secondsLeft = 10
                     }
 
 
@@ -367,10 +395,11 @@ viewQuestionnaire questionnaire =
         PreparingQuestion ->
             div [ class "container" ] [ text "In a galaxy far far away..." ]
 
-        AskingQuestion { question, goodAnswer, wrongAnswers } ->
+        AskingQuestion { question, goodAnswer, wrongAnswers, secondsLeft } ->
             div
                 [ class "container" ]
-                [ p [] [ text question ]
+                [ p [] [ text "Time left : ", viewTimer secondsLeft ]
+                , p [] [ text question ]
                 , div [ class "answers" ] <|
                     List.map viewAnswer <|
                         Set.toList (Set.insert goodAnswer wrongAnswers)
@@ -404,3 +433,11 @@ viewNotification notification =
 
         Just (Info msg) ->
             div [ class "notification-info", onClick DismissNotification ] [ text msg ]
+
+
+viewTimer : Int -> Html Msg
+viewTimer secondsLeft =
+    div
+        [ class "timer"
+        ]
+        [ text (String.fromInt secondsLeft) ]
