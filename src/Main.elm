@@ -7,6 +7,7 @@ import Html.Events exposing (..)
 import Http as Http exposing (expectJson)
 import Json.Decode as Decode exposing (Decoder)
 import Random as Random exposing (Generator, Seed)
+import Time exposing (Posix)
 
 
 main : Program () Model Msg
@@ -15,7 +16,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = \_ -> Time.every 1000 GotTime
         }
 
 
@@ -47,6 +48,7 @@ type alias Question =
     { question : String
     , goodAnswer : String
     , wrongAnswers : List String
+    , secondsLeft : Int
     }
 
 
@@ -56,6 +58,7 @@ type Msg
     | GotAnswer String
     | DismissNotification
     | Retry
+    | GotTime Posix
 
 
 
@@ -106,6 +109,25 @@ update msg model =
             in
             ( { model | questionnaire = Errored, notification = notification }, Cmd.none )
 
+        ( GotTime _, AskingQuestion question ) ->
+            case question.secondsLeft - 1 of
+                0 ->
+                    let
+                        notification =
+                            Just <| Error <| "Too late! (✖╭╮✖)"
+                    in
+                    ( { model | questionnaire = PreparingQuestion, notification = notification }, nextQuestion model.seed )
+
+                secondsLeft ->
+                    let
+                        newQuestion =
+                            { question | secondsLeft = secondsLeft }
+                    in
+                    ( { model | questionnaire = AskingQuestion newQuestion }, Cmd.none )
+
+        ( GotTime _, _ ) ->
+            ( model, Cmd.none )
+
         ( _, _ ) ->
             let
                 notification =
@@ -149,6 +171,7 @@ nextQuestion seed =
                     { question = "How tall is " ++ right.name ++ "?"
                     , goodAnswer = right.height
                     , wrongAnswers = List.map .height wrongs
+                    , secondsLeft = 10
                     }
 
         CPeople Mass ->
@@ -157,6 +180,7 @@ nextQuestion seed =
                     { question = "How much does " ++ right.name ++ " weight?"
                     , goodAnswer = right.mass
                     , wrongAnswers = List.map .mass wrongs
+                    , secondsLeft = 10
                     }
 
         CPeople Gender ->
@@ -165,6 +189,7 @@ nextQuestion seed =
                     { question = "What is the gender of " ++ right.name ++ " ?"
                     , goodAnswer = right.gender
                     , wrongAnswers = List.map .gender wrongs
+                    , secondsLeft = 10
                     }
 
 
@@ -289,10 +314,11 @@ viewQuestionnaire questionnaire =
         PreparingQuestion ->
             div [ class "container" ] [ text "In a galaxy far far away..." ]
 
-        AskingQuestion { question, goodAnswer, wrongAnswers } ->
+        AskingQuestion { question, goodAnswer, wrongAnswers, secondsLeft } ->
             div
                 [ class "container" ]
-                [ p [] [ text question ]
+                [ p [] [ text "Time left : ", viewTimer secondsLeft ]
+                , p [] [ text question ]
                 , div [ class "answers" ] <| List.map viewAnswer (goodAnswer :: wrongAnswers)
                 ]
 
@@ -324,3 +350,11 @@ viewNotification notification =
 
         Just (Info msg) ->
             div [ class "notification-info", onClick DismissNotification ] [ text msg ]
+
+
+viewTimer : Int -> Html Msg
+viewTimer secondsLeft =
+    div
+        [ class "timer"
+        ]
+        [ text (String.fromInt secondsLeft) ]
