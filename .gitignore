@@ -1,7 +1,3 @@
 ### elm ###
 elm-stuff
 repl-temp-*
-
-### others / builds ###
-*.min.js
-*.html
