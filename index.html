@@ -1,6 +1,67 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"></head>
+<style>
+  * {
+    padding: 0;
+    margin: 0;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: none;
+  }
+
+  .notification-error, .notification-info {
+    cursor: pointer;
+    left: 0;
+    margin: 0;
+    max-height: 20%;
+    width: 100%;
+    overflow-y: auto;
+    padding: 1em;
+    position: absolute;
+    top: 0;
+    text-align: center;
+  }
+
+  .notification-error {
+    background: #E74C3C;
+    color: #FFFFFF;
+  }
+
+  .notification-info {
+    background: #3498DB;
+    color: #FFFFFF;
+  }
+
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .answers {
+    margin: 1em;
+    width: 80%;
+    max-width: 25em;
+  }
+
+  .answer {
+    background: #34495E;
+    color: #FFF;
+    cursor: pointer;
+    border-top: 1px solid #FFF;
+    border-bottom: 1px solid #FFF;
+    padding: 1em;
+  }
+
+  .answer:hover {
+    background: #F1C40F;
+  }
+</style>
 <body>
   <div id="main"></div>
   <script src="app.js"></script>
