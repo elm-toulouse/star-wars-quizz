@@ -75,7 +75,10 @@
   <div id="main"></div>
   <script src="app.js"></script>
   <script>
-      Elm.Main.init({ node: document.getElementById("main") });
+      Elm.Main.init({
+          node: document.getElementById("main"),
+          flags: Math.floor(Math.random() * 10000)
+      });
   </script>
 </body>
 </html>

@@ -11,7 +11,7 @@ import Set exposing (Set)
 import Time exposing (Posix)
 
 
-main : Program () Model Msg
+main : Program Int Model Msg
 main =
     document
         { init = init
@@ -68,12 +68,12 @@ type Msg
 -}
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : Int -> ( Model, Cmd Msg )
+init x =
     let
         model =
             { questionnaire = PreparingQuestion
-            , seed = Random.initialSeed 14
+            , seed = Random.initialSeed x
             , notification = Nothing
             }
     in
