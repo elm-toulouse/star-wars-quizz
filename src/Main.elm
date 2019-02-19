@@ -136,6 +136,14 @@ fetchPeople seed builder =
         }
 
 
+fetchSpecies : Seed -> QuestionBuilder Species -> Cmd Msg
+fetchSpecies seed builder =
+    Http.get
+        { url = "https://swapi.co/api/species/"
+        , expect = expectJson (handleHttpResult seed builder) (Decode.field "results" (Decode.list speciesDecoder))
+        }
+
+
 nextQuestion : Seed -> Cmd Msg
 nextQuestion seed =
     let
@@ -165,6 +173,30 @@ nextQuestion seed =
                     { question = "What is the gender of " ++ right.name ++ " ?"
                     , goodAnswer = right.gender
                     , wrongAnswers = List.map .gender wrongs
+                    }
+
+        CSpecies AverageHeight ->
+            fetchSpecies newSeed <|
+                \( right, wrongs ) ->
+                    { question = "What is the aveage height of " ++ right.name ++ " ?"
+                    , goodAnswer = right.averageHeight
+                    , wrongAnswers = List.map .averageHeight wrongs
+                    }
+
+        CSpecies AverageLifespan ->
+            fetchSpecies newSeed <|
+                \( right, wrongs ) ->
+                    { question = "What is the aveage lifespan of " ++ right.name ++ " ?"
+                    , goodAnswer = right.averageLifespan
+                    , wrongAnswers = List.map .averageLifespan wrongs
+                    }
+
+        CSpecies Classification ->
+            fetchSpecies newSeed <|
+                \( right, wrongs ) ->
+                    { question = "What is the classification of " ++ right.name ++ " ?"
+                    , goodAnswer = right.classification
+                    , wrongAnswers = List.map .classification wrongs
                     }
 
 
@@ -234,6 +266,7 @@ httpErrorToString err =
 
 type Category
     = CPeople PeopleField
+    | CSpecies SpeciesField
 
 
 type PeopleField
@@ -242,11 +275,20 @@ type PeopleField
     | Gender
 
 
+type SpeciesField
+    = AverageHeight
+    | AverageLifespan
+    | Classification
+
+
 arbitraryCategory : Generator Category
 arbitraryCategory =
     Random.uniform (CPeople Height)
         [ CPeople Mass
         , CPeople Gender
+        , CSpecies AverageHeight
+        , CSpecies AverageLifespan
+        , CSpecies Classification
         ]
 
 
@@ -258,6 +300,14 @@ type alias People =
     }
 
 
+type alias Species =
+    { name : String
+    , averageHeight : String
+    , averageLifespan : String
+    , classification : String
+    }
+
+
 peopleDecoder : Decoder People
 peopleDecoder =
     Decode.map4 People
@@ -265,6 +315,15 @@ peopleDecoder =
         (Decode.field "mass" Decode.string)
         (Decode.field "height" Decode.string)
         (Decode.field "gender" Decode.string)
+
+
+speciesDecoder : Decoder Species
+speciesDecoder =
+    Decode.map4 Species
+        (Decode.field "name" Decode.string)
+        (Decode.field "average_height" Decode.string)
+        (Decode.field "average_lifespan" Decode.string)
+        (Decode.field "classification" Decode.string)
 
 
 
