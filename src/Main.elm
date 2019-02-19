@@ -7,6 +7,7 @@ import Html.Events exposing (..)
 import Http as Http exposing (expectJson)
 import Json.Decode as Decode exposing (Decoder)
 import Random as Random exposing (Generator, Seed)
+import Set exposing (Set)
 import Time exposing (Posix)
 
 
@@ -47,7 +48,7 @@ type Questionnaire
 type alias Question =
     { question : String
     , goodAnswer : String
-    , wrongAnswers : List String
+    , wrongAnswers : Set String
     , secondsLeft : Int
     }
 
@@ -158,6 +159,14 @@ fetchPeople seed builder =
         }
 
 
+fetchSpecies : Seed -> QuestionBuilder Species -> Cmd Msg
+fetchSpecies seed builder =
+    Http.get
+        { url = "https://swapi.co/api/species/"
+        , expect = expectJson (handleHttpResult seed builder) (Decode.field "results" (Decode.list speciesDecoder))
+        }
+
+
 nextQuestion : Seed -> Cmd Msg
 nextQuestion seed =
     let
@@ -170,7 +179,10 @@ nextQuestion seed =
                 \( right, wrongs ) ->
                     { question = "How tall is " ++ right.name ++ "?"
                     , goodAnswer = right.height
-                    , wrongAnswers = List.map .height wrongs
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .height
+                            |> Set.fromList
                     , secondsLeft = 10
                     }
 
@@ -179,7 +191,10 @@ nextQuestion seed =
                 \( right, wrongs ) ->
                     { question = "How much does " ++ right.name ++ " weight?"
                     , goodAnswer = right.mass
-                    , wrongAnswers = List.map .mass wrongs
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .mass
+                            |> Set.fromList
                     , secondsLeft = 10
                     }
 
@@ -188,7 +203,46 @@ nextQuestion seed =
                 \( right, wrongs ) ->
                     { question = "What is the gender of " ++ right.name ++ " ?"
                     , goodAnswer = right.gender
-                    , wrongAnswers = List.map .gender wrongs
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .gender
+                            |> Set.fromList
+                    , secondsLeft = 10
+                    }
+
+        CSpecies AverageHeight ->
+            fetchSpecies newSeed <|
+                \( right, wrongs ) ->
+                    { question = "What is the aveage height of " ++ right.name ++ " ?"
+                    , goodAnswer = right.averageHeight
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .averageHeight
+                            |> Set.fromList
+                    , secondsLeft = 10
+                    }
+
+        CSpecies AverageLifespan ->
+            fetchSpecies newSeed <|
+                \( right, wrongs ) ->
+                    { question = "What is the aveage lifespan of " ++ right.name ++ " ?"
+                    , goodAnswer = right.averageLifespan
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .averageLifespan
+                            |> Set.fromList
+                    , secondsLeft = 10
+                    }
+
+        CSpecies Classification ->
+            fetchSpecies newSeed <|
+                \( right, wrongs ) ->
+                    { question = "What is the classification of " ++ right.name ++ " ?"
+                    , goodAnswer = right.classification
+                    , wrongAnswers =
+                        wrongs
+                            |> List.map .classification
+                            |> Set.fromList
                     , secondsLeft = 10
                     }
 
@@ -259,6 +313,7 @@ httpErrorToString err =
 
 type Category
     = CPeople PeopleField
+    | CSpecies SpeciesField
 
 
 type PeopleField
@@ -267,11 +322,20 @@ type PeopleField
     | Gender
 
 
+type SpeciesField
+    = AverageHeight
+    | AverageLifespan
+    | Classification
+
+
 arbitraryCategory : Generator Category
 arbitraryCategory =
     Random.uniform (CPeople Height)
         [ CPeople Mass
         , CPeople Gender
+        , CSpecies AverageHeight
+        , CSpecies AverageLifespan
+        , CSpecies Classification
         ]
 
 
@@ -283,6 +347,14 @@ type alias People =
     }
 
 
+type alias Species =
+    { name : String
+    , averageHeight : String
+    , averageLifespan : String
+    , classification : String
+    }
+
+
 peopleDecoder : Decoder People
 peopleDecoder =
     Decode.map4 People
@@ -290,6 +362,15 @@ peopleDecoder =
         (Decode.field "mass" Decode.string)
         (Decode.field "height" Decode.string)
         (Decode.field "gender" Decode.string)
+
+
+speciesDecoder : Decoder Species
+speciesDecoder =
+    Decode.map4 Species
+        (Decode.field "name" Decode.string)
+        (Decode.field "average_height" Decode.string)
+        (Decode.field "average_lifespan" Decode.string)
+        (Decode.field "classification" Decode.string)
 
 
 
@@ -319,7 +400,9 @@ viewQuestionnaire questionnaire =
                 [ class "container" ]
                 [ p [] [ text "Time left : ", viewTimer secondsLeft ]
                 , p [] [ text question ]
-                , div [ class "answers" ] <| List.map viewAnswer (goodAnswer :: wrongAnswers)
+                , div [ class "answers" ] <|
+                    List.map viewAnswer <|
+                        Set.toList (Set.insert goodAnswer wrongAnswers)
                 ]
 
         Errored ->
