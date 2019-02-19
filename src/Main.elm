@@ -31,6 +31,7 @@ type alias Model =
     { questionnaire : Questionnaire
     , seed : Seed
     , notification : Maybe Notification
+    , points : Int
     }
 
 
@@ -75,6 +76,7 @@ init x =
             { questionnaire = PreparingQuestion
             , seed = Random.initialSeed x
             , notification = Nothing
+            , points = 0
             }
     in
     ( model, nextQuestion model.seed )
@@ -94,14 +96,14 @@ update msg model =
 
         ( GotAnswer answer, AskingQuestion { goodAnswer } ) ->
             let
-                notification =
+                ( notification, newPoints ) =
                     if answer == goodAnswer then
-                        Just <| Info <| "Correct! ⊂(✰‿✰)つ"
+                        ( Just <| Info <| "Correct! ⊂(✰‿✰)つ", model.points + 1 )
 
                     else
-                        Just <| Error <| "Incorrect! (✖╭╮✖)"
+                        ( Just <| Error <| "Incorrect! (✖╭╮✖)", model.points - 1 )
             in
-            ( { model | questionnaire = PreparingQuestion, notification = notification }, nextQuestion model.seed )
+            ( { model | questionnaire = PreparingQuestion, notification = notification, points = newPoints }, nextQuestion model.seed )
 
         ( GotHttpError err, PreparingQuestion ) ->
             let
@@ -114,10 +116,10 @@ update msg model =
             case question.secondsLeft - 1 of
                 0 ->
                     let
-                        notification =
-                            Just <| Error <| "Too late! (✖╭╮✖)"
+                        ( notification, newPoints ) =
+                            ( Just <| Error <| "Too late! (✖╭╮✖)", model.points - 1 )
                     in
-                    ( { model | questionnaire = PreparingQuestion, notification = notification }, nextQuestion model.seed )
+                    ( { model | questionnaire = PreparingQuestion, notification = notification, points = newPoints }, nextQuestion model.seed )
 
                 secondsLeft ->
                     let
@@ -380,10 +382,11 @@ speciesDecoder =
 
 
 view : Model -> Document Msg
-view { questionnaire, notification } =
+view { questionnaire, notification, points } =
     { title = "Elm Toulouse #2"
     , body =
         [ viewNotification notification
+        , div [ class "points" ] [ text (" Points : " ++ String.fromInt points) ]
         , viewQuestionnaire questionnaire
         ]
     }
