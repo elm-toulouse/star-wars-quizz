@@ -215,7 +215,7 @@ nextQuestion seed =
         CSpecies AverageHeight ->
             fetchSpecies newSeed <|
                 \( right, wrongs ) ->
-                    { question = "What is the aveage height of " ++ right.name ++ " ?"
+                    { question = "What is the average height of a " ++ right.name ++ " ?"
                     , goodAnswer = right.averageHeight
                     , wrongAnswers =
                         wrongs
@@ -227,7 +227,7 @@ nextQuestion seed =
         CSpecies AverageLifespan ->
             fetchSpecies newSeed <|
                 \( right, wrongs ) ->
-                    { question = "What is the aveage lifespan of " ++ right.name ++ " ?"
+                    { question = "What is the average lifespan of a " ++ right.name ++ " ?"
                     , goodAnswer = right.averageLifespan
                     , wrongAnswers =
                         wrongs
@@ -239,7 +239,7 @@ nextQuestion seed =
         CSpecies Classification ->
             fetchSpecies newSeed <|
                 \( right, wrongs ) ->
-                    { question = "What is the classification of " ++ right.name ++ " ?"
+                    { question = "What is the classification of a " ++ right.name ++ " ?"
                     , goodAnswer = right.classification
                     , wrongAnswers =
                         wrongs
@@ -386,7 +386,7 @@ view { questionnaire, notification, points } =
     { title = "Elm Toulouse #2"
     , body =
         [ viewNotification notification
-        , div [ class "points" ] [ text (" Points : " ++ String.fromInt points) ]
+        , div [ class "points" ] [ p [] [ text <| String.fromInt points ++ " pts" ] ]
         , viewQuestionnaire questionnaire
         ]
     }
@@ -396,13 +396,13 @@ viewQuestionnaire : Questionnaire -> Html Msg
 viewQuestionnaire questionnaire =
     case questionnaire of
         PreparingQuestion ->
-            div [ class "container" ] [ text "In a galaxy far far away..." ]
+            div [ class "container" ] [ p [] [ text "In a galaxy far far away..." ] ]
 
         AskingQuestion { question, goodAnswer, wrongAnswers, secondsLeft } ->
             div
                 [ class "container" ]
                 [ p [] [ viewTimer secondsLeft ]
-                , p [] [ text question ]
+                , p [ class "question" ] [ text question ]
                 , div [ class "answers" ] <|
                     List.map viewAnswer <|
                         Set.toList (Set.insert goodAnswer wrongAnswers)
