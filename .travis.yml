@@ -4,7 +4,14 @@ language: elm
 elm:
   - elm0.19.0
 
+git:
+  depth: false
+
 if: (branch = master) OR (tag =~ ^v)
+
+stages:
+- Build 🔨
+- Deploy 🚀
 
 jobs:
   include:
@@ -15,17 +22,21 @@ jobs:
 
     - stage: Build 🔨
       script:
-      - elm make src/Main.elm --optimize --output=app.js
+      - elm make src/Main.elm --optimize
       - git tag
 
-deploy:
-  provider: releases
-  api_key: $GITHUB_ACCESS_TOKEN
-  skip_cleanup: true
-  draft: true
-  file:
-    - app.js
-  on:
-    repo: elm-toulouse/star-wars-quizz
-    branch: master
-    tags: true
+    - stage: Deploy 🚀
+      if: tag =~ ^v
+      script:
+      - elm make src/Main.elm --optimize --output=app.js
+      deploy:
+        provider: releases
+        api_key: $GITHUB_ACCESS_TOKEN
+        skip_cleanup: true
+        draft: true
+        file:
+          - app.js
+        on:
+          repo: elm-toulouse/star-wars-quizz
+          branch: master
+          tags: true
