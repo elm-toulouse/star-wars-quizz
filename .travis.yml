@@ -4,9 +4,6 @@ language: elm
 elm:
   - elm0.19.0
 
-git:
-  depth: false
-
 branches:
   only:
   - master
@@ -21,11 +18,13 @@ jobs:
     - stage: Build 🔨
       script:
       - elm make src/Main.elm --optimize --output=app.js
+      - git tag
 
 deploy:
   provider: releases
   api_key: $GITHUB_ACCESS_TOKEN
   skip_cleanup: true
+  draft: true
   file:
     - app.js
   on:
