@@ -20,11 +20,15 @@ jobs:
 
     - stage: Build 🔨
       script:
-      - elm make src/Main.elm --optimize
-
-    - stage: Deploy 🚀
-      script:
       - elm make src/Main.elm --optimize --output=app.js
-      - git add app.js index.html && git commit -m $TRAVIS_COMMIT
-      - git checkout gh-pages && git cherry-pick -X theirs -n - && git commit --allow-empty --no-edit
-      - git push -f -q https://KtorZ:$GITHUB_ACCESS_TOKEN@github.com/KtorZ/elm-toulouse-2 gh-pages &>/dev/null
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_ACCESS_TOKEN
+  skip_cleanup: true
+  file:
+    - app.js
+  on:
+    repo: elm-toulouse/star-wars-quizz
+    branch: master
+    tags: true
